@@ -1,0 +1,7 @@
+# Dependency files
+/dep/
+
+# Build files
+/build/
+/bin/
+/tests/

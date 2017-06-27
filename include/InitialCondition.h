@@ -1,59 +1,74 @@
 #ifndef INITIAL_CONDITION_H
 #define INITIAL_CONDITION_H
 
-#include <armadillo>
-#include <boost/random.hpp>
+#include <map>
 #include <memory>
+#include <string>
+
+#include <yaml-cpp/yaml.h>
+#include <armadillo>
+
+#include "RegisterSubclass.h"
 
 namespace InitialCondition {
 
 struct State {
-    arma::vec3 k;
-    arma::vec3 spin;
+	arma::vec3 k;
+	arma::vec3 spin;
 };
 
 class Base {
-   public:
-    virtual State roll() = 0;
+       public:
+	class Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) = 0;
+		virtual ~Factory() {}
+	};
+
+       private:
+	static auto& factories() {
+		static std::map<std::string, std::unique_ptr<Factory>> f;
+		return f;
+	};
+	template <typename Base, typename Child>
+	friend RegisterSubclass<Base, Child>::Register::Register();
+
+       public:
+	virtual State roll() = 0;
+	virtual ~Base() {}
 };
 
-template <typename Engine>
 class Isotropic3D : public Base {
-   private:
-    std::shared_ptr<Engine> engine;
-
-   public:
-    Isotropic3D() = delete;
-    Isotropic3D(std::shared_ptr<Engine> engine) : engine(engine) {}
-    State roll() override;
+       public:
+	static constexpr char type_name[] = "Isotropic3D";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	State roll() override;
 };
 
-template <typename Engine>
-State Isotropic3D<Engine>::roll() {
-    boost::random::uniform_on_sphere<double, arma::vec> RandUnitVec(3);
-
-    return State { RandUnitVec(*(this->engine)), RandUnitVec(*(this->engine)) };
-}
-
-template <typename Engine>
 class Polarized3D : public Base {
-   private:
-    arma::vec3 spin;
-    std::shared_ptr<Engine> engine;
+       private:
+	arma::vec3 spin;
 
-   public:
-    Polarized3D() = delete;
-    Polarized3D(arma::vec3 spin, std::shared_ptr<Engine> engine) : spin(spin), engine(engine) {}
-    State roll() override;
+       public:
+	static constexpr char type_name[] = "Polarized3D";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	Polarized3D() = delete;
+	Polarized3D(arma::vec3 spin) : spin(spin) {}
+	State roll() override;
 };
-
-template <typename Engine>
-State Polarized3D<Engine>::roll() {
-    boost::random::uniform_on_sphere<double, arma::vec> RandUnitVec(3);
-
-    return State { RandUnitVec(*(this->engine)), this->spin };
-}
-
-}
+}  // namespace InitialCondition
+template class RegisterSubclass<InitialCondition::Base,
+				InitialCondition::Isotropic3D>;
+template class RegisterSubclass<InitialCondition::Base,
+				InitialCondition::Polarized3D>;
 
 #endif  // INITIAL_CONDITION_H

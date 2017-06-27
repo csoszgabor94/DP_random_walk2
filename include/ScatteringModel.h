@@ -1,46 +1,60 @@
 #ifndef SCATTERING_MODEL_H
 #define SCATTERING_MODEL_H
 
-#include <armadillo>
-#include <boost/random.hpp>
+#include <map>
 #include <memory>
+#include <string>
+
+#include <yaml-cpp/yaml.h>
+#include <armadillo>
+
+#include "RegisterSubclass.h"
 
 namespace ScatteringModel {
 
 struct Event {
-    arma::vec3 k;
-    double t;
+	arma::vec3 k;
+	double t;
 };
 
 class Base {
-   public:
-    virtual const Event NextEvent(const arma::vec3& k0) =0;
+       public:
+	class Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) = 0;
+		virtual ~Factory() {}
+	};
+
+       private:
+	static auto& factories() {
+		static std::map<std::string, std::unique_ptr<Factory>> f;
+		return f;
+	};
+	template <typename Base, typename Child>
+	friend RegisterSubclass<Base, Child>::Register::Register();
+
+       public:
+	virtual const Event NextEvent(const arma::vec3& k0) = 0;
+	virtual ~Base() {}
 };
 
-template <typename Engine>
 class Isotropic3D : public Base {
-   private:
-    double scattering_rate;
-    std::shared_ptr<Engine> engine;
+       private:
+	double scattering_rate;
 
-   public:
-    Isotropic3D() = delete;
-    Isotropic3D(double scattering_rate, std::shared_ptr<Engine> engine);
-    const Event NextEvent(const arma::vec3& k0) override;
+       public:
+	static constexpr char type_name[] = "Isotropic3D";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	Isotropic3D() = delete;
+	Isotropic3D(double scattering_rate)
+	    : scattering_rate(scattering_rate){};
+	const Event NextEvent(const arma::vec3& k0) override;
 };
-
-template <typename Engine>
-Isotropic3D<Engine>::Isotropic3D(double scattering_rate, std::shared_ptr<Engine> engine)
-    : scattering_rate(scattering_rate), engine(engine){};
-
-template <typename Engine>
-const Event Isotropic3D<Engine>::NextEvent(const arma::vec3& k0) {
-    boost::random::uniform_on_sphere<double, arma::vec> RandUnitVec(3);
-    boost::random::exponential_distribution<> ExpDist(scattering_rate);
-
-    return Event{RandUnitVec(*(this->engine)), ExpDist(*(this->engine))};
-}
-}
-
+}  // namespace ScatteringModel
 
 #endif  // SCATTERING_MODEL_H

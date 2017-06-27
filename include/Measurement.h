@@ -2,12 +2,12 @@
 #define MEASUREMENT_H
 
 namespace Measurement {
-    
+
 class Base {
-    public:
-        //RAII: should construction run the measurement?:
+       public:
+	// RAII: should construction run the measurement?:
 };
 
-}
+}  // namespace Measurement
 
 #endif

@@ -7,8 +7,8 @@ DEPDIR ?= dep
 BINDIR ?= bin
 TESTSDIR ?= tests
 SRCEXT ?= cpp
-CFLAGS += -std=c++14 -O2 -ffast-math -ffunction-sections -fdata-sections
-LDFLAGS += -Wl,--gc-sections -larmadillo
+CFLAGS += -std=c++14 -g -Wall  -O0 -ffast-math -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections -larmadillo -lyaml-cpp
 INCLUDE += -I include
 
 # /CONFIG
@@ -36,7 +36,7 @@ include ${DEPENDS}
 ${DEPDIR}/%.d: ${SRCDIR}/%.${SRCEXT}
 	@mkdir -p ${shell dirname $@} ; \
 	echo -n "`dirname '${patsubst ${SRCDIR}/%.${SRCEXT},${BUILDDIR}/%.o,$<}'`/" > $@; \
-	$(CC) -MM ${INCLUDE} $< >> $@
+	$(CC) -std=c++14 -MM ${INCLUDE} $< >> $@
 ${BINDIR}/% : ${BUILDDIR}/target/%.o ${LIB_OBJECTS}
 	$(CC) ${LDFLAGS} $^ -o $@ ${CFLAGS}
 ${TESTSDIR}/% : ${BUILDDIR}/tests/%.o ${LIB_OBJECTS}

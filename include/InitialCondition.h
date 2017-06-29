@@ -35,6 +35,7 @@ class Base {
 	friend RegisterSubclass<Base, Child>::Register::Register();
 
        public:
+	static const auto& get_factories() { return factories(); }
 	virtual State roll() = 0;
 	virtual ~Base() {}
 };
@@ -70,5 +71,12 @@ template class RegisterSubclass<InitialCondition::Base,
 				InitialCondition::Isotropic3D>;
 template class RegisterSubclass<InitialCondition::Base,
 				InitialCondition::Polarized3D>;
+
+namespace YAML {
+
+template <>
+std::unique_ptr<InitialCondition::Base> Node::as() const;
+
+}  // namespace YAML
 
 #endif  // INITIAL_CONDITION_H

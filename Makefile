@@ -8,8 +8,8 @@ BINDIR ?= bin
 TESTSDIR ?= tests
 SRCEXT ?= cpp
 CFLAGS += -std=c++14 -g -Wall  -O0 -ffast-math -ffunction-sections -fdata-sections
-LDFLAGS += -Wl,--gc-sections -larmadillo -lyaml-cpp
-INCLUDE += -I include
+LDFLAGS += -Wl,--gc-sections -larmadillo yaml-cpp/libyaml-cpp.a
+INCLUDE += -I include -I yaml-cpp/include
 
 # /CONFIG
 
@@ -38,9 +38,9 @@ ${DEPDIR}/%.d: ${SRCDIR}/%.${SRCEXT}
 	echo -n "`dirname '${patsubst ${SRCDIR}/%.${SRCEXT},${BUILDDIR}/%.o,$<}'`/" > $@; \
 	$(CC) -std=c++14 -MM ${INCLUDE} $< >> $@
 ${BINDIR}/% : ${BUILDDIR}/target/%.o ${LIB_OBJECTS}
-	$(CC) ${LDFLAGS} $^ -o $@ ${CFLAGS}
+	$(CC) $^ -o $@ ${CFLAGS} ${LDFLAGS}
 ${TESTSDIR}/% : ${BUILDDIR}/tests/%.o ${LIB_OBJECTS}
-	$(CC) ${LDFLAGS} $^ -o $@ ${CFLAGS}
+	$(CC) $^ -o $@ ${CFLAGS} ${LDFLAGS}
 ${BUILDDIR}/%.o: ${SRCDIR}/%.${SRCEXT}
 	@mkdir -p `dirname $@` ;\
 	echo '$(CC) -c ${INCLUDE} ${CFLAGS} $< -o $@' ;\

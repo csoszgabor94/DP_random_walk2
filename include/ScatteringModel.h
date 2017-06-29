@@ -35,6 +35,7 @@ class Base {
 	friend RegisterSubclass<Base, Child>::Register::Register();
 
        public:
+	static const auto& get_factories() { return factories(); }
 	virtual const Event NextEvent(const arma::vec3& k0) = 0;
 	virtual ~Base() {}
 };
@@ -56,5 +57,14 @@ class Isotropic3D : public Base {
 	const Event NextEvent(const arma::vec3& k0) override;
 };
 }  // namespace ScatteringModel
+template class RegisterSubclass<ScatteringModel::Base,
+				ScatteringModel::Isotropic3D>;
+
+namespace YAML {
+
+template <>
+std::unique_ptr<ScatteringModel::Base> Node::as() const;
+
+}  // namespace YAML
 
 #endif  // SCATTERING_MODEL_H

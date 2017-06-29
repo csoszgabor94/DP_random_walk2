@@ -1,0 +1,15 @@
+type: Ensamble
+spin_count: 10000
+duration: 100
+time_step: 0.1
+initial_condition:
+  type: Polarized3D
+  spin: [0., 0., 1.]
+scattering_model:
+  type: Isotropic3D
+  scattering_rate: 1.
+magnetic_field: #should be default
+  type: Zero
+soc_model:
+  type: Isotropic3D
+  omega: 2.

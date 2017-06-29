@@ -30,6 +30,7 @@ class Base {
 	friend RegisterSubclass<Base, Child>::Register::Register();
 
        public:
+	static const auto& get_factories() { return factories(); }
 	virtual const arma::vec3 advance(const arma::vec3& s0, double t0,
 					 double t,
 					 const arma::vec3& bconst) = 0;
@@ -69,5 +70,12 @@ class Step : public Base {
 }  // namespace MagneticField
 template class RegisterSubclass<MagneticField::Base, MagneticField::Zero>;
 template class RegisterSubclass<MagneticField::Base, MagneticField::Step>;
+
+namespace YAML {
+
+template <>
+std::unique_ptr<MagneticField::Base> Node::as() const;
+
+}  // namespace YAML
 
 #endif  // MAGNETIC_FIELD_H

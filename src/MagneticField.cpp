@@ -6,6 +6,18 @@
 #include "MagneticField.h"
 #include "Misc.h"
 
+namespace YAML {
+
+template <>
+std::unique_ptr<MagneticField::Base> Node::as() const {
+	auto type_name = (*this)["type"].as<std::string>();
+	return MagneticField::Base::get_factories()
+	    .at(type_name)
+	    ->create_from_YAML(*this);
+}
+
+}  // namespace YAML
+
 namespace MagneticField {
 
 constexpr char Zero::type_name[];

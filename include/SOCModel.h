@@ -30,6 +30,7 @@ class Base {
 	friend RegisterSubclass<Base, Child>::Register::Register();
 
        public:
+	static const auto& get_factories() { return factories(); }
 	virtual const arma::vec3 omega(const arma::vec3& k) = 0;
 	virtual ~Base() {}
 };
@@ -51,5 +52,12 @@ class Isotropic3D : public Base {
 };
 }  // namespace SOCModel
 template class RegisterSubclass<SOCModel::Base, SOCModel::Isotropic3D>;
+
+namespace YAML {
+
+template <>
+std::unique_ptr<SOCModel::Base> Node::as() const;
+
+}  // namespace YAML
 
 #endif  // SOC_MODEL_H

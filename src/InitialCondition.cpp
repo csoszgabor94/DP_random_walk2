@@ -8,6 +8,18 @@
 #include "Misc.h"
 #include "Random.h"
 
+namespace YAML {
+
+template <>
+std::unique_ptr<InitialCondition::Base> Node::as() const {
+	auto type_name = (*this)["type"].as<std::string>();
+	return InitialCondition::Base::get_factories()
+	    .at(type_name)
+	    ->create_from_YAML(*this);
+}
+
+}  // namespace YAML
+
 namespace InitialCondition {
 
 constexpr char Isotropic3D::type_name[];

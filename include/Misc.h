@@ -31,7 +31,7 @@ struct convert<arma::Col<double>::fixed<size>> {
 		}
 
 		for (size_t k = 0; k < size; k++) {
-			rhs[k] = node[0].as<double>();
+			rhs[k] = node[k].as<double>();
 		}
 		return true;
 	}

@@ -45,6 +45,7 @@ class Ensamble : public Base {
 	unsigned int spin_count;
 	double duration;
 	double time_step;
+	double t0;
 	std::unique_ptr<InitialCondition::Base> initial_condition;
 	std::unique_ptr<ScatteringModel::Base> scattering_model;
 	std::unique_ptr<MagneticField::Base> magnetic_field;
@@ -58,18 +59,11 @@ class Ensamble : public Base {
 		    const YAML::Node&) override;
 	};
 	Ensamble() = delete;
-	Ensamble(unsigned int spin_count, double duration, double time_step,
+	Ensamble(unsigned int spin_count, double duration, double time_step, double t0,
 		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		 std::unique_ptr<MagneticField::Base>&& magnetic_field,
-		 std::unique_ptr<SOCModel::Base>&& soc_model)
-	    : spin_count(spin_count),
-	      duration(duration),
-	      time_step(time_step),
-	      initial_condition(std::move(initial_condition)),
-	      scattering_model(std::move(scattering_model)),
-	      magnetic_field(std::move(magnetic_field)),
-	      soc_model(std::move(soc_model)) {}
+		 std::unique_ptr<SOCModel::Base>&& soc_model);
 
 	arma::mat run() override;
 	arma::mat run(unsigned int threads) override;

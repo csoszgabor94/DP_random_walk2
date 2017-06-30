@@ -1,7 +1,8 @@
 type: Ensamble
-spin_count: 10000
+spin_count: 100
 duration: 100
 time_step: 0.1
+t0: 0.
 initial_condition:
   type: Polarized3D
   spin: [0., 0., 1.]

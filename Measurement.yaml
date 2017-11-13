@@ -10,7 +10,8 @@ scattering_model:
   type: Isotropic3D
   scattering_rate: 1.
 magnetic_field: #should be default
-  type: Zero
+  type: Echo
+  tflip: 2.
 soc_model:
   type: Isotropic3D
   omega: 2.

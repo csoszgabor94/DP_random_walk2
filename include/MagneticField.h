@@ -62,14 +62,33 @@ class Step : public Base {
 		    const YAML::Node&) override;
 	};
 	Step() = delete;
-	inline Step(const arma::vec3& field, double tstep)
+	Step(const arma::vec3& field, double tstep)
 	    : field(field), tstep(tstep) {}
 	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
 				 const arma::vec3& bconst) override;
 };
+
+class Echo : public Base {
+       private:
+	double tflip;
+
+       public:
+	static constexpr char type_name[] = "Echo";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	Echo() = delete;
+	Echo(double tflip) : tflip(tflip) {}
+	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
+				 const arma::vec3& bconst) override;
+};
+
 }  // namespace MagneticField
 template class RegisterSubclass<MagneticField::Base, MagneticField::Zero>;
 template class RegisterSubclass<MagneticField::Base, MagneticField::Step>;
+template class RegisterSubclass<MagneticField::Base, MagneticField::Echo>;
 
 namespace YAML {
 

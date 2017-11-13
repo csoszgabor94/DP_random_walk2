@@ -32,8 +32,8 @@ const arma::vec3 Zero::advance(const arma::vec3& s0, double t0, double t,
 
 constexpr char Step::type_name[];
 std::unique_ptr<Base> Step::Factory::create_from_YAML(const YAML::Node& node) {
-	auto field = node["field"].as<arma::vec3>();
-	auto tstep = node["t0"].as<double>();
+	const auto field = node["field"].as<arma::vec3>();
+	const auto tstep = node["t0"].as<double>();
 	return std::make_unique<Step>(field, tstep);
 }
 const arma::vec3 Step::advance(const arma::vec3& s0, double t0, double t,
@@ -51,4 +51,23 @@ const arma::vec3 Step::advance(const arma::vec3& s0, double t0, double t,
 		return Misc::Rotate(s0, (bconst + this->field) * (t - t0));
 	}
 }
+
+constexpr char Echo::type_name[];
+std::unique_ptr<Base> Echo::Factory::create_from_YAML(const YAML::Node& node) {
+	const auto tflip = node["tflip"].as<double>();
+	return std::make_unique<Echo>(tflip);
+}
+const arma::vec3 Echo::advance(const arma::vec3& s0, double t0, double t,
+			       const arma::vec3& bconst) {
+	if (t0 < this->tflip) {
+		if (t < this->tflip) {
+			return Misc::Rotate(s0, bconst * (t - t0));
+		} else {
+			return Misc::Rotate(s0, bconst * (2 * tflip - t0 - t));
+		}
+	} else {
+		return Misc::Rotate(s0, -bconst * (t - t0));
+	}
+}
+
 }  // namespace MagneticField

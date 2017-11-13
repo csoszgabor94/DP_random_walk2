@@ -31,7 +31,7 @@ class Base {
 
        public:
 	static const auto& get_factories() { return factories(); }
-	virtual const arma::vec3 omega(const arma::vec3& k) = 0;
+	virtual arma::vec3 omega(const arma::vec3& k) const = 0;
 	virtual ~Base() {}
 };
 
@@ -48,7 +48,7 @@ class Isotropic3D : public Base {
 	};
 	Isotropic3D() = delete;
 	Isotropic3D(double omega) : o(omega) {}
-	const arma::vec3 omega(const arma::vec3& k) override;
+	arma::vec3 omega(const arma::vec3& k) const override;
 };
 
 class Zeeman : public Base {
@@ -66,7 +66,7 @@ class Zeeman : public Base {
 	Zeeman() = delete;
 	Zeeman(const arma::vec3& bfield, std::unique_ptr<Base> base_model)
 	    : bfield(bfield), base_model(std::move(base_model)) {}
-	const arma::vec3 omega(const arma::vec3& k) override;
+	arma::vec3 omega(const arma::vec3& k) const override;
 };
 
 }  // namespace SOCModel

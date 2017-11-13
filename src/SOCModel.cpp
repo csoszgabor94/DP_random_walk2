@@ -25,7 +25,7 @@ std::unique_ptr<Base> Isotropic3D::Factory::create_from_YAML(
     const YAML::Node& node) {
 	return std::make_unique<Isotropic3D>(node["omega"].as<double>());
 }
-const arma::vec3 Isotropic3D::omega(const arma::vec3& k) { return k; }
+arma::vec3 Isotropic3D::omega(const arma::vec3& k) const { return k; }
 
 constexpr char Zeeman::type_name[];
 std::unique_ptr<Base> Zeeman::Factory::create_from_YAML(
@@ -34,7 +34,7 @@ std::unique_ptr<Base> Zeeman::Factory::create_from_YAML(
 	const auto bfield = node["field"].as<arma::vec3>();
 	return std::make_unique<Zeeman>(bfield, std::move(bm_ptr));
 }
-const arma::vec3 Zeeman::omega(const arma::vec3& k) {
+arma::vec3 Zeeman::omega(const arma::vec3& k) const {
 	return base_model->omega(k) + bfield;
 }
 

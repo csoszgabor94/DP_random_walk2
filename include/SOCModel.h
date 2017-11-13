@@ -50,8 +50,28 @@ class Isotropic3D : public Base {
 	Isotropic3D(double omega) : o(omega) {}
 	const arma::vec3 omega(const arma::vec3& k) override;
 };
+
+class Zeeman : public Base {
+       private:
+	arma::vec3 bfield;
+	std::unique_ptr<Base> base_model;
+
+       public:
+	static constexpr char type_name[] = "Zeeman";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	Zeeman() = delete;
+	Zeeman(const arma::vec3& bfield, std::unique_ptr<Base> base_model)
+	    : bfield(bfield), base_model(std::move(base_model)) {}
+	const arma::vec3 omega(const arma::vec3& k) override;
+};
+
 }  // namespace SOCModel
 template class RegisterSubclass<SOCModel::Base, SOCModel::Isotropic3D>;
+template class RegisterSubclass<SOCModel::Base, SOCModel::Zeeman>;
 
 namespace YAML {
 

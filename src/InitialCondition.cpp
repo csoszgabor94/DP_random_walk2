@@ -40,7 +40,8 @@ constexpr char Polarized3D::type_name[];
 
 std::unique_ptr<Base> Polarized3D::Factory::create_from_YAML(
     const YAML::Node& node) {
-	return std::make_unique<Polarized3D>(node["spin"].as<arma::vec3>());
+	return std::make_unique<Polarized3D>(
+	    Misc::mapat(node, "spin").as<arma::vec3>());
 }
 
 State Polarized3D::roll() {

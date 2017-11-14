@@ -7,6 +7,7 @@
 
 #include "Random.h"
 #include "ScatteringModel.h"
+#include "Misc.h"
 
 namespace YAML {
 
@@ -27,7 +28,7 @@ constexpr char Isotropic3D::type_name[];
 std::unique_ptr<Base> Isotropic3D::Factory::create_from_YAML(
     const YAML::Node& node) {
 	return std::make_unique<Isotropic3D>(
-	    node["scattering_rate"].as<double>());
+	    Misc::mapat(node,"scattering_rate").as<double>());
 }
 
 const Event Isotropic3D::NextEvent(const arma::vec3& k0) {

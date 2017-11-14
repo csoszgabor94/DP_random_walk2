@@ -9,6 +9,7 @@
 #include "Measurement.h"
 #include "SOCModel.h"
 #include "ScatteringModel.h"
+#include "Misc.h"
 
 namespace YAML {
 
@@ -54,16 +55,18 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
 
 std::unique_ptr<Base> Ensamble::Factory::create_from_YAML(
     const YAML::Node& node) {
+	using Misc::mapat;
 	return std::make_unique<Ensamble>(
-	    node["spin_count"].as<unsigned int>(),
-	    node["duration"].as<double>(), node["time_step"].as<double>(),
-	    node["t0"].as<double>(),
-	    node["initial_condition"]
+	    mapat(node,"spin_count").as<unsigned int>(),
+	    mapat(node,"duration").as<double>(),
+	    mapat(node,"time_step").as<double>(),
+	    mapat(node,"t0").as<double>(),
+	    mapat(node,"initial_condition")
 		.as<std::unique_ptr<InitialCondition::Base>>(),
-	    node["scattering_model"]
+	    mapat(node,"scattering_model")
 		.as<std::unique_ptr<ScatteringModel::Base>>(),
-	    node["magnetic_field"].as<std::unique_ptr<MagneticField::Base>>(),
-	    node["soc_model"].as<std::unique_ptr<SOCModel::Base>>());
+	    mapat(node,"magnetic_field").as<std::unique_ptr<MagneticField::Base>>(),
+	    mapat(node,"soc_model").as<std::unique_ptr<SOCModel::Base>>());
 }
 
 arma::mat Ensamble::run() {

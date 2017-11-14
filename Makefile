@@ -7,7 +7,7 @@ DEPDIR ?= dep
 BINDIR ?= bin
 TESTSDIR ?= tests
 SRCEXT ?= cpp
-CFLAGS += -std=c++14 -g -Wall  -O0 -ffast-math -ffunction-sections -fdata-sections
+CFLAGS += -std=c++17 -g -Wall  -O0 -ffast-math -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections -larmadillo yaml-cpp/libyaml-cpp.a
 INCLUDE += -I include -I yaml-cpp/include
 

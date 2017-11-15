@@ -25,7 +25,20 @@ std::unique_ptr<Base> Isotropic3D::Factory::create_from_YAML(
     const YAML::Node& node) {
 	return std::make_unique<Isotropic3D>(Misc::mapat(node,"omega").as<double>());
 }
-arma::vec3 Isotropic3D::omega(const arma::vec3& k) const { return k; }
+arma::vec3 Isotropic3D::omega(const arma::vec3& k) const { return o*k; }
+
+constexpr char Dresselhaus::type_name[];
+std::unique_ptr<Base> Dresselhaus::Factory::create_from_YAML(
+    const YAML::Node& node) {
+	return std::make_unique<Dresselhaus>(Misc::mapat(node,"omega").as<double>());
+}
+arma::vec3 Dresselhaus::omega(const arma::vec3& k) const {
+	return o*arma::vec{
+		k[0] * (k[1] * k[1] - k[2] * k[2]),
+		k[1] * (k[2] * k[2] - k[0] * k[0]),
+		k[2] * (k[0] * k[0] - k[1] * k[1]),
+	};
+}
 
 constexpr char Zeeman::type_name[];
 std::unique_ptr<Base> Zeeman::Factory::create_from_YAML(

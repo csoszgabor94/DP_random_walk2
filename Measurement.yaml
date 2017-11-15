@@ -15,6 +15,6 @@ magnetic_field: #should be default
 soc_model:
   type: Zeeman
   base_model:
-    type: Isotropic3D
+    type: Dresselhaus
     omega: 2.
   field: [0., 0., 1.]

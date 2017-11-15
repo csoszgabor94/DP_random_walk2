@@ -32,7 +32,8 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
 		   std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		   std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		   std::unique_ptr<MagneticField::Base>&& magnetic_field,
-		   std::unique_ptr<SOCModel::Base>&& soc_model)
+		   std::unique_ptr<SOCModel::Base>&& soc_model,
+		   std::unique_ptr<Output::Base>&& output)
     : spin_count(spin_count),
       duration(duration),
       time_step(time_step),
@@ -40,7 +41,8 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
       initial_condition(std::move(initial_condition)),
       scattering_model(std::move(scattering_model)),
       magnetic_field(std::move(magnetic_field)),
-      soc_model(std::move(soc_model)) {
+      soc_model(std::move(soc_model)),
+      output(std::move(output)) {
 	if (duration <= 0) {
 		throw std::invalid_argument{"\"duration\" must be positive."};
 	}
@@ -66,10 +68,11 @@ std::unique_ptr<Base> Ensamble::Factory::create_from_YAML(
 	    mapat(node,"scattering_model")
 		.as<std::unique_ptr<ScatteringModel::Base>>(),
 	    mapat(node,"magnetic_field").as<std::unique_ptr<MagneticField::Base>>(),
-	    mapat(node,"soc_model").as<std::unique_ptr<SOCModel::Base>>());
+	    mapat(node,"soc_model").as<std::unique_ptr<SOCModel::Base>>(),
+	    mapat(node,"output").as<std::unique_ptr<Output::Base>>());
 }
 
-arma::mat Ensamble::run() {
+void Ensamble::run() {
 	auto size = (size_t)(duration / time_step);
 	auto result = arma::mat(4, size);
 
@@ -130,17 +133,20 @@ arma::mat Ensamble::run() {
 		}
 	}
 
-	// average and add times
-	for (size_t k = 0; k < size; k++) {
-		result.col(k) /= spin_count;
-		result(0, k) = k * time_step;
-	}
+	output->write_header({"t", "s_x", "s_y", "s_z"});
 
-	return result;
+	for (size_t k = 0; k < size; k++) {
+		output->write_record({
+		  k*time_step,
+		  result(1,k) / spin_count,
+		  result(2,k) / spin_count,
+		  result(3,k) / spin_count
+		});
+	}
 }
 
-arma::mat Ensamble::run(unsigned int) {
-	return this->run();  // TODO multithread
+void Ensamble::run(unsigned int) {
+	this->run();  // TODO multithread
 }
 
 }  // namespace Measurement

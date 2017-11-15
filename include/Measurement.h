@@ -13,6 +13,7 @@
 #include "RegisterSubclass.h"
 #include "SOCModel.h"
 #include "ScatteringModel.h"
+#include "Output.h"
 
 namespace Measurement {
 
@@ -35,8 +36,8 @@ class Base {
 
        public:
 	static const auto& get_factories() { return factories(); }
-	virtual arma::mat run() = 0;
-	virtual arma::mat run(unsigned int threads) = 0;
+	virtual void run() = 0;
+	virtual void run(unsigned int threads) = 0;
 	virtual ~Base() {}
 };
 
@@ -50,6 +51,7 @@ class Ensamble : public Base {
 	std::unique_ptr<ScatteringModel::Base> scattering_model;
 	std::unique_ptr<MagneticField::Base> magnetic_field;
 	std::unique_ptr<SOCModel::Base> soc_model;
+	std::unique_ptr<Output::Base> output;
 
        public:
 	static constexpr char type_name[] = "Ensamble";
@@ -63,10 +65,11 @@ class Ensamble : public Base {
 		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		 std::unique_ptr<MagneticField::Base>&& magnetic_field,
-		 std::unique_ptr<SOCModel::Base>&& soc_model);
+		 std::unique_ptr<SOCModel::Base>&& soc_model,
+		 std::unique_ptr<Output::Base>&& output);
 
-	arma::mat run() override;
-	arma::mat run(unsigned int threads) override;
+	void run() override;
+	void run(unsigned int threads) override;
 };
 
 }  // namespace Measurement

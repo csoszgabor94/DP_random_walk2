@@ -18,3 +18,7 @@ soc_model:
     type: Dresselhaus
     omega: 2.
   field: [0., 0., 1.]
+output:
+  type: CSVFile
+  path: out.csv
+  header: true

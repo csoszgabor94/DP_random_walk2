@@ -13,13 +13,16 @@ namespace arma_types {
 namespace Misc {
 arma::vec3 Rotate(const arma::vec3& v0, const arma::vec3& phi);
 
+template<typename... Ts> struct make_void { typedef void type;};
+template<typename... Ts> using void_t = typename make_void<Ts...>::type;
+
 template <typename, typename = void>
 struct is_printable : std::false_type {};
 
 template <typename T>
 struct is_printable<
   T,
-  std::void_t<
+  void_t<
     decltype(
       std::declval<std::ostream>() << std::declval<const T>()
     )
@@ -27,17 +30,23 @@ struct is_printable<
 > : std::true_type {};
 
 template <typename T>
-std::string to_string(const T& t) {
-	if
-		constexpr(is_printable<T>::value) {
-			std::ostringstream buf;
-			buf << t;
-			return buf.str();
-		}
-	else {
-		return {};
-	}
+std::enable_if_t<
+  is_printable<T>::value,
+  std::string
+> to_string(const T& t) {
+	std::ostringstream buf;
+	buf << t;
+	return buf.str();
 }
+
+template <typename T>
+std::enable_if_t<
+  !is_printable<T>::value,
+  std::string
+> to_string(const T&) {
+	return {};
+}
+
 
 // Checked map key access
 template <typename Key>

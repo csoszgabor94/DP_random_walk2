@@ -10,6 +10,7 @@
 #include "SOCModel.h"
 #include "ScatteringModel.h"
 #include "Misc.h"
+#include "Rotation.h"
 
 namespace YAML {
 
@@ -74,7 +75,7 @@ std::unique_ptr<Base> Ensamble::Factory::create_from_YAML(
 
 void Ensamble::run() {
 	auto size = (size_t)(duration / time_step);
-	auto result = arma::mat(4, size);
+	auto result = arma::mat(4, size, arma::fill::zeros);
 
 	for (size_t k = 0; k < spin_count; k++) {
 		auto times = std::vector<double>{};
@@ -146,6 +147,117 @@ void Ensamble::run() {
 }
 
 void Ensamble::run(unsigned int) {
+	this->run();  // TODO multithread
+}
+
+constexpr char EchoDecay::type_name[];
+
+EchoDecay::EchoDecay(
+    unsigned int spin_count, double duration, double time_step, double t0,
+    std::unique_ptr<InitialCondition::Base>&& initial_condition,
+    std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+    std::unique_ptr<SOCModel::Base>&& soc_model,
+    std::unique_ptr<Output::Base>&& output)
+    : spin_count(spin_count),
+      duration(duration),
+      time_step(time_step),
+      t0(t0),
+      initial_condition(std::move(initial_condition)),
+      scattering_model(std::move(scattering_model)),
+      soc_model(std::move(soc_model)),
+      output(std::move(output)) {
+	if (duration <= 0) {
+		throw std::invalid_argument{"\"duration\" must be positive."};
+	}
+	if (time_step <= 0) {
+		throw std::invalid_argument{"\"time_step\" must be positive."};
+	}
+	if (time_step > duration) {
+		throw std::invalid_argument{
+		    "\"time_step\" must not be larger than \"duration\"."};
+	}
+}
+
+std::unique_ptr<Base> EchoDecay::Factory::create_from_YAML(
+    const YAML::Node& node) {
+	using Misc::mapat;
+	return std::make_unique<EchoDecay>(
+	    mapat(node, "spin_count").as<unsigned int>(),
+	    mapat(node, "duration").as<double>(),
+	    mapat(node, "time_step").as<double>(),
+	    mapat(node, "t0").as<double>(),
+	    mapat(node, "initial_condition")
+		.as<std::unique_ptr<InitialCondition::Base>>(),
+	    mapat(node, "scattering_model")
+		.as<std::unique_ptr<ScatteringModel::Base>>(),
+	    mapat(node, "soc_model").as<std::unique_ptr<SOCModel::Base>>(),
+	    mapat(node, "output").as<std::unique_ptr<Output::Base>>());
+}
+
+void EchoDecay::run() {
+	const auto size = (size_t)(duration / time_step);
+	auto result = arma::mat(3, size, arma::fill::zeros);
+
+	for (size_t k = 0; k < spin_count; ++k) {
+		auto rotations = std::vector<Rotation::rotation>(2 * size);
+
+		const auto initial_state = initial_condition->roll();
+		auto last_k = initial_state.k;
+		auto last_step = Rotation::rotation(
+		    arma::vec3(soc_model->omega(last_k) * time_step));
+		rotations[0] = Rotation::rotation::identity();
+
+		auto next = scattering_model->NextEvent(last_k);
+
+		// Populate rotations
+		const auto half_step = time_step / 2.;
+		for (size_t i = 1; i < 2 * size; ++i) {
+			if (t0 + i * half_step > next.t) {
+				rotations[i] =
+				    rotations[i - 1]
+				    * Rotation::rotation(arma::vec3(
+					soc_model->omega(last_k)
+					* (next.t - (t0 + (i - 1) * half_step))
+				      ))
+				    * Rotation::rotation(arma::vec3(
+					soc_model->omega(next.k)
+					* (t0 + i * half_step - next.t)
+				      ));
+				last_k = next.k;
+				last_step = Rotation::rotation(arma::vec3(
+				    soc_model->omega(last_k) * half_step));
+				next = scattering_model->NextEvent(last_k);
+
+			} else {
+				rotations[i] = rotations[i - 1] * last_step;
+			}
+		}
+
+		// Accumulate result spin
+		const auto first_spin = initial_state.spin;
+		for (size_t i = 0; i < size; ++i) {
+			const auto rot_pulse = rotations[i];
+			const auto rot_echo = rotations[2 * i];
+
+			// Right-to-left multiplication is more performant
+			const auto spin =
+			    rot_pulse
+			    * (rot_echo.inverse()
+			       * (rot_pulse * first_spin));
+			result.col(i) += spin;
+		}
+	}
+	output->write_header({"t", "s_x", "s_y", "s_z"});
+
+	for (size_t k = 0; k < size; k++) {
+		output->write_record({k * time_step,
+				      result(0, k) / spin_count,
+				      result(1, k) / spin_count,
+				      result(2, k) / spin_count});
+	}
+}
+
+void EchoDecay::run(unsigned int) {
 	this->run();  // TODO multithread
 }
 

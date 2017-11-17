@@ -72,8 +72,39 @@ class Ensamble : public Base {
 	void run(unsigned int threads) override;
 };
 
+class EchoDecay : public Base {
+       private:
+	unsigned int spin_count;
+	double duration;
+	double time_step;
+	double t0;
+	std::unique_ptr<InitialCondition::Base> initial_condition;
+	std::unique_ptr<ScatteringModel::Base> scattering_model;
+	std::unique_ptr<SOCModel::Base> soc_model;
+	std::unique_ptr<Output::Base> output;
+
+       public:
+	static constexpr char type_name[] = "EchoDecay";
+	class Factory : public Base::Factory {
+	       public:
+		virtual std::unique_ptr<Base> create_from_YAML(
+		    const YAML::Node&) override;
+	};
+	EchoDecay() = delete;
+	EchoDecay(unsigned int spin_count, double duration, double time_step,
+		  double t0,
+		  std::unique_ptr<InitialCondition::Base>&& initial_condition,
+		  std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+		  std::unique_ptr<SOCModel::Base>&& soc_model,
+		  std::unique_ptr<Output::Base>&& output);
+
+	void run() override;
+	void run(unsigned int threads) override;
+};
+
 }  // namespace Measurement
 template class RegisterSubclass<Measurement::Base, Measurement::Ensamble>;
+template class RegisterSubclass<Measurement::Base, Measurement::EchoDecay>;
 
 namespace YAML {
 

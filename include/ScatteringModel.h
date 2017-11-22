@@ -9,6 +9,9 @@
 #include <armadillo>
 
 #include "RegisterSubclass.h"
+#include "arraysize.h"
+#include "yaml_utils.h"
+#include "tuple_apply.h"
 
 namespace ScatteringModel {
 
@@ -36,29 +39,42 @@ class Base {
 
        public:
 	static const auto& get_factories() { return factories(); }
-	virtual const Event NextEvent(const arma::vec3& k0) = 0;
+	virtual Event NextEvent(const arma::vec3& k0) = 0;
 	virtual ~Base() {}
 };
 
-class Isotropic3D : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
+       public:
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
+	Event NextEvent(const arma::vec3& k0) override {
+		return T::NextEvent(k0);
+	}
+};
+
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class Isotropic3D {
        private:
 	double scattering_rate;
 
        public:
-	static constexpr char type_name[] = "Isotropic3D";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Isotropic3D() = delete;
 	Isotropic3D(double scattering_rate)
-	    : scattering_rate(scattering_rate){};
-	const Event NextEvent(const arma::vec3& k0) override;
+	    : scattering_rate(scattering_rate) {}
+	Event NextEvent(const arma::vec3& k0);
+
+	static constexpr const auto& name = "Isotropic3D";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("scattering_rate");
+	static auto factory(double scattering_rate) {
+		return ScatteringModel::Isotropic3D(scattering_rate);
+	}
 };
+
 }  // namespace ScatteringModel
-template class RegisterSubclass<ScatteringModel::Base,
-				ScatteringModel::Isotropic3D>;
 
 namespace YAML {
 

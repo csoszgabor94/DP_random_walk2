@@ -26,8 +26,6 @@ std::unique_ptr<Measurement::Base> Node::as() const {
 
 namespace Measurement {
 
-constexpr char Ensamble::type_name[];
-
 Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
 		   double t0,
 		   std::unique_ptr<InitialCondition::Base>&& initial_condition,
@@ -54,23 +52,6 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
 		throw std::invalid_argument{
 		    "\"time_step\" must not be larger than \"duration\"."};
 	}
-}
-
-std::unique_ptr<Base> Ensamble::Factory::create_from_YAML(
-    const YAML::Node& node) {
-	using Misc::mapat;
-	return std::make_unique<Ensamble>(
-	    mapat(node,"spin_count").as<unsigned int>(),
-	    mapat(node,"duration").as<double>(),
-	    mapat(node,"time_step").as<double>(),
-	    mapat(node,"t0").as<double>(),
-	    mapat(node,"initial_condition")
-		.as<std::unique_ptr<InitialCondition::Base>>(),
-	    mapat(node,"scattering_model")
-		.as<std::unique_ptr<ScatteringModel::Base>>(),
-	    mapat(node,"magnetic_field").as<std::unique_ptr<MagneticField::Base>>(),
-	    mapat(node,"soc_model").as<std::unique_ptr<SOCModel::Base>>(),
-	    mapat(node,"output").as<std::unique_ptr<Output::Base>>());
 }
 
 void Ensamble::run() {
@@ -150,8 +131,6 @@ void Ensamble::run(unsigned int) {
 	this->run();  // TODO multithread
 }
 
-constexpr char EchoDecay::type_name[];
-
 EchoDecay::EchoDecay(
     unsigned int spin_count, double duration, double time_step, double t0,
     std::unique_ptr<InitialCondition::Base>&& initial_condition,
@@ -176,22 +155,6 @@ EchoDecay::EchoDecay(
 		throw std::invalid_argument{
 		    "\"time_step\" must not be larger than \"duration\"."};
 	}
-}
-
-std::unique_ptr<Base> EchoDecay::Factory::create_from_YAML(
-    const YAML::Node& node) {
-	using Misc::mapat;
-	return std::make_unique<EchoDecay>(
-	    mapat(node, "spin_count").as<unsigned int>(),
-	    mapat(node, "duration").as<double>(),
-	    mapat(node, "time_step").as<double>(),
-	    mapat(node, "t0").as<double>(),
-	    mapat(node, "initial_condition")
-		.as<std::unique_ptr<InitialCondition::Base>>(),
-	    mapat(node, "scattering_model")
-		.as<std::unique_ptr<ScatteringModel::Base>>(),
-	    mapat(node, "soc_model").as<std::unique_ptr<SOCModel::Base>>(),
-	    mapat(node, "output").as<std::unique_ptr<Output::Base>>());
 }
 
 void EchoDecay::run() {
@@ -262,3 +225,8 @@ void EchoDecay::run(unsigned int) {
 }
 
 }  // namespace Measurement
+
+template class RegisterSubclass2<Measurement::Ensamble,
+				 Measurement::Subclass_policy>;
+template class RegisterSubclass2<Measurement::EchoDecay,
+				 Measurement::Subclass_policy>;

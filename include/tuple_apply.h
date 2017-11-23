@@ -1,6 +1,10 @@
 #ifndef UUID_3E3C9699_1213_4327_9B3C_55CA78BC94E4
 #define UUID_3E3C9699_1213_4327_9B3C_55CA78BC94E4
 
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 namespace Detail {
 
 template <typename F, typename Tuple, size_t... S>
@@ -24,17 +28,17 @@ struct arg_tuple;
 
 template <typename R, typename... T>
 struct arg_tuple<R(T...)> {
-	using type = std::tuple<T...>;
+	using type = std::tuple<std::decay_t<T>...>;
 };
 
 template <typename R, typename... T>
 struct arg_tuple<R (&)(T...)> {
-	using type = std::tuple<T...>;
+	using type = std::tuple<std::decay_t<T>...>;
 };
 
 template <typename R, typename... T>
 struct arg_tuple<R (*)(T...)> {
-	using type = std::tuple<T...>;
+	using type = std::tuple<std::decay_t<T>...>;
 };
 
 #endif  //  UUID_3E3C9699_1213_4327_9B3C_55CA78BC94E4

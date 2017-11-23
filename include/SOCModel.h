@@ -35,60 +35,69 @@ class Base {
 	virtual ~Base() {}
 };
 
-class Isotropic3D : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
+       public:
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
+	arma::vec3 omega(const arma::vec3& k) const override {
+		return T::omega(k);
+	}
+};
+
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class Isotropic3D {
        private:
 	double o;
 
        public:
-	static constexpr char type_name[] = "Isotropic3D";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Isotropic3D() = delete;
 	Isotropic3D(double omega) : o(omega) {}
-	arma::vec3 omega(const arma::vec3& k) const override;
+	arma::vec3 omega(const arma::vec3& k) const;
+
+	static constexpr const auto& name = "Isotropic3D";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("omega");
+	static auto factory(double omega) { return Isotropic3D(omega); }
 };
 
-class Dresselhaus : public Base {
+class Dresselhaus {
        private:
 	double o;
 
        public:
-	static constexpr char type_name[] = "Dresselhaus";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Dresselhaus() = delete;
 	Dresselhaus(double omega) : o(omega) {}
-	arma::vec3 omega(const arma::vec3& k) const override;
+	arma::vec3 omega(const arma::vec3& k) const;
+
+	static constexpr const auto& name = "Dresselhaus";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("omega");
+	static auto factory(double omega) { return Dresselhaus(omega); }
 };
 
-class Zeeman : public Base {
+class Zeeman {
        private:
 	arma::vec3 bfield;
 	std::unique_ptr<Base> base_model;
 
        public:
 	static constexpr char type_name[] = "Zeeman";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Zeeman() = delete;
 	Zeeman(const arma::vec3& bfield, std::unique_ptr<Base> base_model)
 	    : bfield(bfield), base_model(std::move(base_model)) {}
-	arma::vec3 omega(const arma::vec3& k) const override;
+	arma::vec3 omega(const arma::vec3& k) const;
+
+	static constexpr const auto& name = "Zeeman";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("field", "base_model");
+	static auto factory(const arma::vec3& bfield,
+			    std::unique_ptr<Base> base_model) {
+		return Zeeman(bfield, std::move(base_model));
+	}
 };
 
 }  // namespace SOCModel
-template class RegisterSubclass<SOCModel::Base, SOCModel::Isotropic3D>;
-template class RegisterSubclass<SOCModel::Base, SOCModel::Dresselhaus>;
-template class RegisterSubclass<SOCModel::Base, SOCModel::Zeeman>;
 
 namespace YAML {
 

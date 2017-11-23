@@ -20,23 +20,11 @@ std::unique_ptr<MagneticField::Base> Node::as() const {
 
 namespace MagneticField {
 
-constexpr char Zero::type_name[];
-std::unique_ptr<Base> Zero::Factory::create_from_YAML(const YAML::Node&) {
-	return std::make_unique<Zero>();
-}
-
 const arma::vec3 Zero::advance(const arma::vec3& s0, double t0, double t,
 			       const arma::vec3& bconst) {
 	return Misc::Rotate(s0, bconst * (t - t0));
 }
 
-constexpr char Step::type_name[];
-std::unique_ptr<Base> Step::Factory::create_from_YAML(const YAML::Node& node) {
-	using Misc::mapat;
-	const auto field = mapat(node,"field").as<arma::vec3>();
-	const auto tstep = mapat(node,"t0").as<double>();
-	return std::make_unique<Step>(field, tstep);
-}
 const arma::vec3 Step::advance(const arma::vec3& s0, double t0, double t,
 			       const arma::vec3& bconst) {
 	if (t0 < this->tstep) {
@@ -53,11 +41,6 @@ const arma::vec3 Step::advance(const arma::vec3& s0, double t0, double t,
 	}
 }
 
-constexpr char Echo::type_name[];
-std::unique_ptr<Base> Echo::Factory::create_from_YAML(const YAML::Node& node) {
-	const auto tflip = Misc::mapat(node,"tflip").as<double>();
-	return std::make_unique<Echo>(tflip);
-}
 const arma::vec3 Echo::advance(const arma::vec3& s0, double t0, double t,
 			       const arma::vec3& bconst) {
 	if (t0 < this->tflip) {
@@ -72,3 +55,7 @@ const arma::vec3 Echo::advance(const arma::vec3& s0, double t0, double t,
 }
 
 }  // namespace MagneticField
+
+template class RegisterSubclass2<MagneticField::Zero, MagneticField::Subclass_policy>;
+template class RegisterSubclass2<MagneticField::Step, MagneticField::Subclass_policy>;
+template class RegisterSubclass2<MagneticField::Echo, MagneticField::Subclass_policy>;

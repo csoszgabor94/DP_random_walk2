@@ -70,7 +70,7 @@ class Isotropic3D {
 	static constexpr const auto& keywords =
 	    make_array<const char*>("scattering_rate");
 	static auto factory(double scattering_rate) {
-		return ScatteringModel::Isotropic3D(scattering_rate);
+		return Isotropic3D(scattering_rate);
 	}
 };
 

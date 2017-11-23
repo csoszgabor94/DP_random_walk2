@@ -21,19 +21,8 @@ std::unique_ptr<Output::Base> Node::as() const {
 
 namespace Output {
 
-constexpr char CSVFile::type_name[];
-
 CSVFile::CSVFile(const std::string& path, bool header)
     : out(new std::ofstream(path)), header(header) {}
-
-std::unique_ptr<Base> CSVFile::Factory::create_from_YAML(
-    const YAML::Node& node) {
-	using Misc::mapat;
-	return std::make_unique<CSVFile>(
-		 mapat(node, "path").as<std::string>(),
-		 mapat(node, "header").as<bool>()
-	       );
-}
 
 void CSVFile::write_header(const std::vector<std::string>& h) {
 	auto it = h.begin();
@@ -68,3 +57,5 @@ void CSVFile::write_record(const std::vector<double>& r) {
 }
 
 }  // namespace Output
+
+template class RegisterSubclass2<Output::CSVFile, Output::Subclass_policy>;

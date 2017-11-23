@@ -41,7 +41,24 @@ class Base {
 	virtual ~Base() {}
 };
 
-class Ensamble : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
+       public:
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
+	void run() override {
+		T::run();
+	}
+	void run(unsigned int threads) override {
+		T::run(threads); 
+	}
+};
+
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class Ensamble {
        private:
 	unsigned int spin_count;
 	double duration;
@@ -54,13 +71,6 @@ class Ensamble : public Base {
 	std::unique_ptr<Output::Base> output;
 
        public:
-	static constexpr char type_name[] = "Ensamble";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Ensamble() = delete;
 	Ensamble(unsigned int spin_count, double duration, double time_step, double t0,
 		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
@@ -68,11 +78,42 @@ class Ensamble : public Base {
 		 std::unique_ptr<SOCModel::Base>&& soc_model,
 		 std::unique_ptr<Output::Base>&& output);
 
-	void run() override;
-	void run(unsigned int threads) override;
+	void run();
+	void run(unsigned int threads);
+
+	static constexpr const auto &name = "Ensamble";
+	static constexpr const auto &keywords = make_array<const char*>(
+		"spin_count",
+		"duration",
+		"time_step",
+		"t0",
+		"initial_condition",
+		"scattering_model",
+		"magnetic_field",
+		"soc_model",
+		"output"
+		);
+	static auto factory(unsigned int spin_count, double duration, double time_step, double t0,
+		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
+		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+		 std::unique_ptr<MagneticField::Base>&& magnetic_field,
+		 std::unique_ptr<SOCModel::Base>&& soc_model,
+		 std::unique_ptr<Output::Base>&& output){
+		return Ensamble(
+		    spin_count,
+		    duration,
+		    time_step,
+		    t0,
+		    std::move(initial_condition),
+		    std::move(scattering_model),
+		    std::move(magnetic_field),
+		    std::move(soc_model),
+		    std::move(output)
+		    );
+	}
 };
 
-class EchoDecay : public Base {
+class EchoDecay {
        private:
 	unsigned int spin_count;
 	double duration;
@@ -84,13 +125,6 @@ class EchoDecay : public Base {
 	std::unique_ptr<Output::Base> output;
 
        public:
-	static constexpr char type_name[] = "EchoDecay";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	EchoDecay() = delete;
 	EchoDecay(unsigned int spin_count, double duration, double time_step,
 		  double t0,
 		  std::unique_ptr<InitialCondition::Base>&& initial_condition,
@@ -98,13 +132,39 @@ class EchoDecay : public Base {
 		  std::unique_ptr<SOCModel::Base>&& soc_model,
 		  std::unique_ptr<Output::Base>&& output);
 
-	void run() override;
-	void run(unsigned int threads) override;
+	void run();
+	void run(unsigned int threads);
+
+	static constexpr const auto &name = "EchoDecay";
+	static constexpr const auto &keywords = make_array<const char*>(
+		"spin_count",
+		"duration",
+		"time_step",
+		"t0",
+		"initial_condition",
+		"scattering_model",
+		"soc_model",
+		"output"
+		);
+	static auto factory(unsigned int spin_count, double duration, double time_step, double t0,
+		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
+		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+		 std::unique_ptr<SOCModel::Base>&& soc_model,
+		 std::unique_ptr<Output::Base>&& output){
+		return EchoDecay(
+		    spin_count,
+		    duration,
+		    time_step,
+		    t0,
+		    std::move(initial_condition),
+		    std::move(scattering_model),
+		    std::move(soc_model),
+		    std::move(output)
+		    );
+	}
 };
 
 }  // namespace Measurement
-template class RegisterSubclass<Measurement::Base, Measurement::Ensamble>;
-template class RegisterSubclass<Measurement::Base, Measurement::EchoDecay>;
 
 namespace YAML {
 

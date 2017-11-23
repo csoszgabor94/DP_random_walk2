@@ -37,26 +37,42 @@ class Base {
 	virtual ~Base() = default;
 };
 
-class CSVFile : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
+       public:
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
+	void write_header(const std::vector<std::string>& x) override {
+		T::write_header(x);
+	}
+	void write_record(const std::vector<double>& x) override {
+		T::write_record(x);
+	}
+};
+
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class CSVFile {
        private:
 	std::unique_ptr<std::ostream> out;
 	bool header;
 
        public:
-	static constexpr char type_name[] = "CSVFile";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	CSVFile() = delete;
 	CSVFile(const std::string& path, bool header);
-	void write_header(const std::vector<std::string>&) override;
-	void write_record(const std::vector<double>&) override;
+	void write_header(const std::vector<std::string>&);
+	void write_record(const std::vector<double>&);
+
+	static constexpr const auto &name = "CSVFile";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("path", "header");
+	static auto factory(const std::string& path, bool header) {
+		return CSVFile(path, header);
+	}
 };
 
 }  // namespace Output
-template class RegisterSubclass<Output::Base, Output::CSVFile>;
 
 namespace YAML {
 

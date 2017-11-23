@@ -40,37 +40,45 @@ class Base {
 	virtual ~Base() {}
 };
 
-class Isotropic3D : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
        public:
-	static constexpr char type_name[] = "Isotropic3D";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	State roll() override;
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
+	State roll() override {
+		return T::roll();
+	}
 };
 
-class Polarized3D : public Base {
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class Isotropic3D {
+       public:
+	State roll();
+
+	static constexpr const auto& name = "Isotropic3D";
+	static constexpr const auto& keywords = make_array<const char*>();
+	static auto factory() { return Isotropic3D{}; }
+};
+
+class Polarized3D {
        private:
 	arma::vec3 spin;
 
        public:
-	static constexpr char type_name[] = "Polarized3D";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Polarized3D() = delete;
 	Polarized3D(arma::vec3 spin) : spin(spin) {}
-	State roll() override;
+	State roll();
+
+	static constexpr const auto& name = "Polarized3D";
+	static constexpr const auto& keywords = make_array<const char*>("spin");
+	static auto factory(const arma::vec3& spin) {
+		return Polarized3D(spin);
+	}
 };
+
 }  // namespace InitialCondition
-template class RegisterSubclass<InitialCondition::Base,
-				InitialCondition::Isotropic3D>;
-template class RegisterSubclass<InitialCondition::Base,
-				InitialCondition::Polarized3D>;
 
 namespace YAML {
 

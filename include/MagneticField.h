@@ -37,58 +37,66 @@ class Base {
 	virtual ~Base() {}
 };
 
-class Zero : public Base {
+template <typename T>
+class Subclass_policy : public Base, private T {
        public:
-	static constexpr char type_name[] = "Zero";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
+	using base_t = Base;
+	explicit Subclass_policy(const T& t) : T(t) {}
+	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
 	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
-				 const arma::vec3& bconst) override;
+				 const arma::vec3& bconst) override {
+		return T::advance(s0, t0, t, bconst);
+	}
 };
 
-class Step : public Base {
+template <typename T>
+using Subclass = PolyphormicSubclass<T, Subclass_policy>;
+
+class Zero {
+       public:
+	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
+				 const arma::vec3& bconst);
+
+	static constexpr const auto& name = "Zero";
+	static constexpr const auto& keywords = make_array<const char*>();
+	static auto factory() { return Zero{}; }
+};
+
+class Step {
        private:
 	arma::vec3 field;
 	double tstep;
 
        public:
-	static constexpr char type_name[] = "Zero";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Step() = delete;
 	Step(const arma::vec3& field, double tstep)
 	    : field(field), tstep(tstep) {}
 	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
-				 const arma::vec3& bconst) override;
+				 const arma::vec3& bconst);
+
+	static constexpr const auto& name = "Step";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("field", "t0");
+	static auto factory(const arma::vec3& field, double t0) {
+		return Step(field, t0);
+	}
 };
 
-class Echo : public Base {
+class Echo {
        private:
 	double tflip;
 
        public:
-	static constexpr char type_name[] = "Echo";
-	class Factory : public Base::Factory {
-	       public:
-		virtual std::unique_ptr<Base> create_from_YAML(
-		    const YAML::Node&) override;
-	};
-	Echo() = delete;
 	Echo(double tflip) : tflip(tflip) {}
 	const arma::vec3 advance(const arma::vec3& s0, double t0, double t,
-				 const arma::vec3& bconst) override;
+				 const arma::vec3& bconst);
+
+	static constexpr const auto& name = "Echo";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("tflip");
+	static auto factory(double tflip) { return Echo(tflip); }
 };
 
 }  // namespace MagneticField
-template class RegisterSubclass<MagneticField::Base, MagneticField::Zero>;
-template class RegisterSubclass<MagneticField::Base, MagneticField::Step>;
-template class RegisterSubclass<MagneticField::Base, MagneticField::Echo>;
 
 namespace YAML {
 

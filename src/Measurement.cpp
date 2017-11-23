@@ -1,5 +1,7 @@
 #include <memory>
 #include <stdexcept>
+#include <string>
+using namespace std::string_literals;
 
 #include <yaml-cpp/yaml.h>
 #include <armadillo>
@@ -16,10 +18,15 @@ namespace YAML {
 
 template <>
 std::unique_ptr<Measurement::Base> Node::as() const {
-	auto type_name = (*this)["type"].as<std::string>();
+	auto type_name = Misc::mapat(*this, "type").as<std::string>();
+	try {
 	return Measurement::Base::get_factories()
-	    .at(type_name)
-	    ->create_from_YAML(*this);
+	       .at(type_name)
+	       ->create_from_YAML(*this);
+	} catch (const std::out_of_range&) {
+		throw YAML::RepresentationException(
+		    this->Mark(), "Unrecognized type: "s + type_name);
+	}
 }
 
 }  // namespace YAML

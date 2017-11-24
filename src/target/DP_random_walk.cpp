@@ -4,12 +4,16 @@
 #include <armadillo>
 
 #include "Measurement.h"
-#include "globals.h"
 #include "cli_parser.h"
+#include "globals.h"
 
 int main(int argc, const char* argv[]) try {
-	globals::options = cli_parser::parse(argc - 1, argv + 1);
-	YAML::Node node = YAML::LoadFile("Measurement.yaml");
+	if (argc < 2) {
+		std::cerr << "Usage: DP_random_walk <filename> [args...]'n";
+		return 1;
+	}
+	globals::options = cli_parser::parse(argc - 2, argv + 2);
+	YAML::Node node = YAML::LoadFile(argv[1]);
 	auto measurement_uptr = node.as<std::unique_ptr<Measurement::Base>>();
 	measurement_uptr->run();
 	return 0;

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 
+#include "globals.h"
+
 namespace arma_types {
 #include <armadillo_bits/typedef_elem.hpp>
 }  // namespace arma_types
@@ -50,7 +52,7 @@ std::enable_if_t<
 
 // Checked map key access
 template <typename Key>
-const YAML::Node mapat(const YAML::Node& node, const Key& key) {
+YAML::Node mapat(const YAML::Node& node, const Key& key) {
 	if (!node.IsMap()) {
 		throw YAML::RepresentationException(node.Mark(),
 						    "Expected Map");
@@ -58,21 +60,26 @@ const YAML::Node mapat(const YAML::Node& node, const Key& key) {
 	const auto value = node[key];
 	if (!value) {
 		throw YAML::RepresentationException(
-		    node.Mark(), "Key unavaliable: " + to_string(key));
+		    node.Mark(), "Key \"" + to_string(key) + "\" not found.");
 	}
-	return value;
-}
+	if (value.Tag() == "!option") {
+		std::string option_arg;
+		const auto& option_name = value.template as<std::string>();
+		try {
+			option_arg = globals::options.at(option_name);
+		} catch (const std::out_of_range&) {
+			throw std::runtime_error("Option \"" + option_name +
+						 "\" not found.");
+		}
 
-template <typename Key>
-YAML::Node mapat(YAML::Node& node, const Key& key) {
-	if (!node.IsMap()) {
-		throw YAML::RepresentationException(node.Mark(),
-						    "Expected Map");
-	}
-	auto value = node[key];
-	if (!value) {
-		throw YAML::RepresentationException(
-		    node.Mark(), "Key unavaliable: " + to_string(key));
+		try {
+			const auto new_node = YAML::Load(option_arg);
+			return new_node;
+		} catch (YAML::ParserException& e) {
+			e.msg +=
+			    ", parsing error in option \"" + option_name + '\"';
+			throw YAML::ParserException(e.mark, e.msg);
+		}
 	}
 	return value;
 }

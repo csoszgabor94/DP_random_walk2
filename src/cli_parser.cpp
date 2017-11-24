@@ -32,7 +32,7 @@ static std::vector<token> tokenize(const int argc, const char *const *argv) {
 		if (key) {
 			auto arg_str = std::string(*(argv + i));
 			if (arg_str.compare(0, 2, "--") != 0) {
-				auto what_stream = std::ostringstream{};
+				std::ostringstream what_stream{};
 				what_stream
 				    << "Expected option type argument at place "
 				    << i + 1 << " instead of \"" << arg_str

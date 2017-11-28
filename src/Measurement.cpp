@@ -171,32 +171,36 @@ void EchoDecay::run() {
 	for (size_t k = 0; k < spin_count; ++k) {
 		auto rotations = std::vector<Rotation::rotation>(2 * size);
 
+		const auto half_step = time_step / 2.;
 		const auto initial_state = initial_condition->roll();
 		auto last_k = initial_state.k;
+		auto last_t = t0;
 		auto last_step = Rotation::rotation(
-		    arma::vec3(soc_model->omega(last_k) * time_step));
+		    arma::vec3(soc_model->omega(last_k) * half_step));
 		rotations[0] = Rotation::rotation::identity();
 
 		auto next = scattering_model->NextEvent(last_k);
+		auto next_t = t0 + next.t;
 
 		// Populate rotations
-		const auto half_step = time_step / 2.;
 		for (size_t i = 1; i < 2 * size; ++i) {
-			if (t0 + i * half_step > next.t) {
+			if (t0 + i * half_step > next_t) {
 				rotations[i] =
 				    rotations[i - 1]
 				    * Rotation::rotation(arma::vec3(
 					soc_model->omega(last_k)
-					* (next.t - (t0 + (i - 1) * half_step))
+					* (next_t - (t0 + (i - 1) * half_step))
 				      ))
 				    * Rotation::rotation(arma::vec3(
 					soc_model->omega(next.k)
-					* (t0 + i * half_step - next.t)
+					* (t0 + i * half_step - next_t)
 				      ));
 				last_k = next.k;
+				last_t = next_t;
 				last_step = Rotation::rotation(arma::vec3(
 				    soc_model->omega(last_k) * half_step));
 				next = scattering_model->NextEvent(last_k);
+				next_t = last_t + next.t;
 
 			} else {
 				rotations[i] = rotations[i - 1] * last_step;

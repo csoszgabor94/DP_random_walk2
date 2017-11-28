@@ -59,13 +59,13 @@ inline matrix_rotation::matrix_rotation(double angle,
 	// https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
 	const auto& k = direction;
 	arma::mat33 cross_matrix = {
-	  { 0    , -k[2],  k[1]},
-	  {  k[2],     0, -k[0]},
-	  { -k[1],  k[0],     0}
+	  {    0., -k[2],  k[1]},
+	  {  k[2],    0., -k[0]},
+	  { -k[1],  k[0],    0.}
 	};
 	rot_matrix += (
 	  std::sin(angle) * arma::mat33(arma::fill::eye)
-	  + (1 - std::cos(angle)) * cross_matrix
+	  + (1. - std::cos(angle)) * cross_matrix
 	) * cross_matrix;
 }
 

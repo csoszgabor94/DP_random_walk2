@@ -190,17 +190,35 @@ void EchoDecay::run() {
 				    * Rotation::rotation(arma::vec3(
 					soc_model->omega(last_k)
 					* (next_t - (t0 + (i - 1) * half_step))
-				      ))
-				    * Rotation::rotation(arma::vec3(
-					soc_model->omega(next.k)
-					* (t0 + i * half_step - next_t)
-				      ));
+					));
+
 				last_k = next.k;
 				last_t = next_t;
-				last_step = Rotation::rotation(arma::vec3(
-				    soc_model->omega(last_k) * half_step));
 				next = scattering_model->NextEvent(last_k);
 				next_t = last_t + next.t;
+
+				while (t0 + i * half_step > next_t) {
+					rotations[i] =
+					    rotations[i]
+					    * Rotation::rotation(arma::vec3(
+					        soc_model->omega(last_k)
+						* (next_t - last_t)
+						));
+					last_k = next.k;
+					last_t = next_t;
+					next = scattering_model->NextEvent(last_k);
+					next_t = last_t + next.t;
+				}
+
+				rotations[i] =
+				    rotations[i]
+				    * Rotation::rotation(arma::vec3(
+				        soc_model->omega(last_k)
+				        * (t0 + i * half_step - last_t)
+				        ));
+
+				last_step = Rotation::rotation(arma::vec3(
+				    soc_model->omega(last_k) * half_step));
 
 			} else {
 				rotations[i] = rotations[i - 1] * last_step;

@@ -170,6 +170,7 @@ void EchoDecay::run() {
 
 	for (size_t k = 0; k < spin_count; ++k) {
 		auto rotations = std::vector<Rotation::rotation>(2 * size);
+		auto invrotations = std::vector<Rotation::rotation>(2 * size);
 
 		const auto half_step = time_step / 2.;
 		const auto initial_state = initial_condition->roll();
@@ -178,6 +179,7 @@ void EchoDecay::run() {
 		auto last_step = Rotation::rotation(
 		    arma::vec3(soc_model->omega(last_k) * half_step));
 		rotations[0] = Rotation::rotation::identity();
+		invrotations[0] = Rotation::rotation::identity();
 
 		auto next = scattering_model->NextEvent(last_k);
 		auto next_t = t0 + next.t;
@@ -191,6 +193,12 @@ void EchoDecay::run() {
 					soc_model->omega(last_k)
 					* (next_t - (t0 + (i - 1) * half_step))
 					));
+				invrotations[i] =
+					invrotations[i - 1]
+					* Rotation::rotation(arma::vec3(
+					    - soc_model->omega(last_k)
+					    * (next_t - (t0 + (i - 1) * half_step))
+					    ));
 
 				last_k = next.k;
 				last_t = next_t;
@@ -202,6 +210,12 @@ void EchoDecay::run() {
 					    rotations[i]
 					    * Rotation::rotation(arma::vec3(
 					        soc_model->omega(last_k)
+						* (next_t - last_t)
+						));
+					invrotations[i] =
+					    invrotations[i]
+					    * Rotation::rotation(arma::vec3(
+					        - soc_model->omega(last_k)
 						* (next_t - last_t)
 						));
 					last_k = next.k;
@@ -216,12 +230,19 @@ void EchoDecay::run() {
 				        soc_model->omega(last_k)
 				        * (t0 + i * half_step - last_t)
 				        ));
+				invrotations[i] =
+				    invrotations[i]
+				    * Rotation::rotation(arma::vec3(
+				        - soc_model->omega(last_k)
+				        * (t0 + i * half_step - last_t)
+				        ));
 
 				last_step = Rotation::rotation(arma::vec3(
 				    soc_model->omega(last_k) * half_step));
 
 			} else {
 				rotations[i] = rotations[i - 1] * last_step;
+				invrotations[i] = invrotations[i - 1] * last_step.inverse();
 			}
 		}
 
@@ -229,12 +250,13 @@ void EchoDecay::run() {
 		const auto first_spin = initial_state.spin;
 		for (size_t i = 0; i < size; ++i) {
 			const auto rot_pulse = rotations[i];
-			const auto rot_echo = rotations[2 * i];
+			const auto invrot_pulse = invrotations[i];
+			const auto invrot_echo = invrotations[2 * i];
 
 			// Right-to-left multiplication is more performant
 			const auto spin =
-			    rot_pulse
-			    * (rot_echo.inverse()
+			    invrot_echo
+			    * (invrot_pulse.inverse()
 			       * (rot_pulse * first_spin));
 			result.col(i) += spin;
 		}

@@ -105,7 +105,26 @@ struct convert<arma::Col<double>::fixed<size>> {
 		}
 
 		for (size_t k = 0; k < size; k++) {
-			rhs[k] = node[k].as<double>();
+			auto value = node[k];
+			while (value.Tag() == "!option") {
+				std::string option_arg;
+				const auto& option_name = value.template as<std::string>();
+				try {
+					option_arg = globals::options.at(option_name);
+				} catch (const std::out_of_range&) {
+					throw std::runtime_error("Option \"" + option_name +
+								 "\" not found.");
+				}
+
+				try {
+					value = YAML::Load(option_arg);
+				} catch (YAML::ParserException& e) {
+					e.msg +=
+					    ", parsing error in option \"" + option_name + '\"';
+					throw YAML::ParserException(e.mark, e.msg);
+				}
+			}
+			rhs[k] = value.as<double>();
 		}
 		return true;
 	}

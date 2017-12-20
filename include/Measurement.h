@@ -164,6 +164,57 @@ class EchoDecay {
 	}
 };
 
+class EchoDecayTest {
+       private:
+	unsigned int spin_count;
+	double duration;
+	double time_step;
+	double t0;
+	std::unique_ptr<InitialCondition::Base> initial_condition;
+	std::unique_ptr<ScatteringModel::Base> scattering_model;
+	std::unique_ptr<SOCModel::Base> soc_model;
+	std::unique_ptr<Output::Base> output;
+
+       public:
+	EchoDecayTest(unsigned int spin_count, double duration, double time_step,
+		  double t0,
+		  std::unique_ptr<InitialCondition::Base>&& initial_condition,
+		  std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+		  std::unique_ptr<SOCModel::Base>&& soc_model,
+		  std::unique_ptr<Output::Base>&& output);
+
+	void run();
+	void run(unsigned int threads);
+
+	static constexpr const auto &name = "EchoDecayTest";
+	static constexpr const auto &keywords = make_array<const char*>(
+		"spin_count",
+		"duration",
+		"time_step",
+		"t0",
+		"initial_condition",
+		"scattering_model",
+		"soc_model",
+		"output"
+		);
+	static auto factory(unsigned int spin_count, double duration, double time_step, double t0,
+		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
+		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
+		 std::unique_ptr<SOCModel::Base>&& soc_model,
+		 std::unique_ptr<Output::Base>&& output){
+		return EchoDecayTest(
+		    spin_count,
+		    duration,
+		    time_step,
+		    t0,
+		    std::move(initial_condition),
+		    std::move(scattering_model),
+		    std::move(soc_model),
+		    std::move(output)
+		    );
+	}
+};
+
 }  // namespace Measurement
 
 namespace YAML {

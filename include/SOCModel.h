@@ -83,7 +83,6 @@ class Zeeman {
 	std::unique_ptr<Base> base_model;
 
        public:
-	static constexpr char type_name[] = "Zeeman";
 	Zeeman(const arma::vec3& bfield, std::unique_ptr<Base> base_model)
 	    : bfield(bfield), base_model(std::move(base_model)) {}
 	arma::vec3 omega(const arma::vec3& k) const;
@@ -94,6 +93,25 @@ class Zeeman {
 	static auto factory(const arma::vec3& bfield,
 			    std::unique_ptr<Base> base_model) {
 		return Zeeman(bfield, std::move(base_model));
+	}
+};
+
+class Stretch {
+       private:
+	arma::vec3 lambdas;
+	std::unique_ptr<Base> base_model;
+
+       public:
+	Stretch(const arma::vec3& lambdas, std::unique_ptr<Base> base_model)
+	    : lambdas(lambdas), base_model(std::move(base_model)) {}
+	arma::vec3 omega(const arma::vec3& k) const;
+
+	static constexpr const auto& name = "Stretch";
+	static constexpr const auto& keywords =
+	    make_array<const char*>("lambdas", "base_model");
+	static auto factory(const arma::vec3& lambdas,
+			    std::unique_ptr<Base> base_model) {
+		return Stretch(lambdas, std::move(base_model));
 	}
 };
 

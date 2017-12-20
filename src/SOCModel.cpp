@@ -42,6 +42,10 @@ arma::vec3 Zeeman::omega(const arma::vec3& k) const {
 	return base_model->omega(k) + bfield;
 }
 
+arma::vec3 Stretch::omega(const arma::vec3& k) const {
+	return base_model->omega(k) % lambdas;  // Elementwise multiplication
+}
+
 }  // namespace SOCModel
 
 template class RegisterSubclass2<SOCModel::Isotropic3D,
@@ -49,4 +53,6 @@ template class RegisterSubclass2<SOCModel::Isotropic3D,
 template class RegisterSubclass2<SOCModel::Dresselhaus,
 				 SOCModel::Subclass_policy>;
 template class RegisterSubclass2<SOCModel::Zeeman,
+				 SOCModel::Subclass_policy>;
+template class RegisterSubclass2<SOCModel::Stretch,
 				 SOCModel::Subclass_policy>;

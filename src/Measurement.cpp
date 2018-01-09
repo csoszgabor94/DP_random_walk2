@@ -188,17 +188,17 @@ void EchoDecay::run() {
 		for (size_t i = 1; i < 2 * size; ++i) {
 			if (t0 + i * half_step > next_t) {
 				rotations[i] =
-				    rotations[i - 1]
-				    * Rotation::rotation(arma::vec3(
+				    Rotation::rotation(arma::vec3(
 					soc_model->omega(last_k)
 					* (next_t - (t0 + (i - 1) * half_step))
-					));
+					))
+				    * rotations[i - 1];
 				invrotations[i] =
-					invrotations[i - 1]
-					* Rotation::rotation(arma::vec3(
-					    - soc_model->omega(last_k)
-					    * (next_t - (t0 + (i - 1) * half_step))
-					    ));
+				    Rotation::rotation(arma::vec3(
+				        - soc_model->omega(last_k)
+				        * (next_t - (t0 + (i - 1) * half_step))
+				        ))
+				    * invrotations[i - 1];
 
 				last_k = next.k;
 				last_t = next_t;
@@ -207,17 +207,17 @@ void EchoDecay::run() {
 
 				while (t0 + i * half_step > next_t) {
 					rotations[i] =
-					    rotations[i]
-					    * Rotation::rotation(arma::vec3(
+					    Rotation::rotation(arma::vec3(
 					        soc_model->omega(last_k)
 						* (next_t - last_t)
-						));
+						))
+					    * rotations[i];
 					invrotations[i] =
-					    invrotations[i]
-					    * Rotation::rotation(arma::vec3(
+					    Rotation::rotation(arma::vec3(
 					        - soc_model->omega(last_k)
 						* (next_t - last_t)
-						));
+						))
+					    * invrotations[i];
 					last_k = next.k;
 					last_t = next_t;
 					next = scattering_model->NextEvent(last_k);
@@ -225,24 +225,24 @@ void EchoDecay::run() {
 				}
 
 				rotations[i] =
-				    rotations[i]
-				    * Rotation::rotation(arma::vec3(
+				    Rotation::rotation(arma::vec3(
 				        soc_model->omega(last_k)
 				        * (t0 + i * half_step - last_t)
-				        ));
+				        ))
+				    * rotations[i];
 				invrotations[i] =
-				    invrotations[i]
-				    * Rotation::rotation(arma::vec3(
+				    Rotation::rotation(arma::vec3(
 				        - soc_model->omega(last_k)
 				        * (t0 + i * half_step - last_t)
-				        ));
+				        ))
+				    * invrotations[i];
 
 				last_step = Rotation::rotation(arma::vec3(
 				    soc_model->omega(last_k) * half_step));
 
 			} else {
-				rotations[i] = rotations[i - 1] * last_step;
-				invrotations[i] = invrotations[i - 1] * last_step.inverse();
+				rotations[i] = last_step * rotations[i - 1];
+				invrotations[i] = last_step.inverse() * invrotations[i - 1];
 			}
 		}
 

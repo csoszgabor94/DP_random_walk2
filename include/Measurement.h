@@ -37,8 +37,7 @@ class Base {
        public:
 	static const auto& get_factories() { return factories(); }
 	virtual void run() = 0;
-	virtual void run(unsigned int threads) = 0;
-	virtual ~Base() {}
+		virtual ~Base() {}
 };
 
 template <typename T>
@@ -49,9 +48,6 @@ class Subclass_policy : public Base, private T {
 	explicit Subclass_policy(T&& t) : T(std::move(t)) {}
 	void run() override {
 		T::run();
-	}
-	void run(unsigned int threads) override {
-		T::run(threads); 
 	}
 };
 
@@ -64,14 +60,16 @@ class Ensamble {
 	double duration;
 	double time_step;
 	double t0;
+	unsigned int threads;
 	std::unique_ptr<InitialCondition::Base> initial_condition;
 	std::unique_ptr<ScatteringModel::Base> scattering_model;
 	std::unique_ptr<MagneticField::Base> magnetic_field;
 	std::unique_ptr<SOCModel::Base> soc_model;
 	std::unique_ptr<Output::Base> output;
+	arma::mat do_run(unsigned int thread_nr);
 
        public:
-	Ensamble(unsigned int spin_count, double duration, double time_step, double t0,
+	Ensamble(unsigned int spin_count, double duration, double time_step, double t0, unsigned int threads,
 		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		 std::unique_ptr<MagneticField::Base>&& magnetic_field,
@@ -79,7 +77,6 @@ class Ensamble {
 		 std::unique_ptr<Output::Base>&& output);
 
 	void run();
-	void run(unsigned int threads);
 
 	static constexpr const auto &name = "Ensamble";
 	static constexpr const auto &keywords = make_array<const char*>(
@@ -87,13 +84,14 @@ class Ensamble {
 		"duration",
 		"time_step",
 		"t0",
+		"threads",
 		"initial_condition",
 		"scattering_model",
 		"magnetic_field",
 		"soc_model",
 		"output"
 		);
-	static auto factory(unsigned int spin_count, double duration, double time_step, double t0,
+	static auto factory(unsigned int spin_count, double duration, double time_step, double t0, unsigned int threads,
 		 std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		 std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		 std::unique_ptr<MagneticField::Base>&& magnetic_field,
@@ -104,6 +102,7 @@ class Ensamble {
 		    duration,
 		    time_step,
 		    t0,
+		    threads,
 		    std::move(initial_condition),
 		    std::move(scattering_model),
 		    std::move(magnetic_field),

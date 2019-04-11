@@ -1,6 +1,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <future>	
 using namespace std::string_literals;
 
 #include <yaml-cpp/yaml.h>
@@ -34,7 +35,7 @@ std::unique_ptr<Measurement::Base> Node::as() const {
 namespace Measurement {
 
 Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
-		   double t0,
+		   double t0, unsigned int threads,
 		   std::unique_ptr<InitialCondition::Base>&& initial_condition,
 		   std::unique_ptr<ScatteringModel::Base>&& scattering_model,
 		   std::unique_ptr<MagneticField::Base>&& magnetic_field,
@@ -44,6 +45,7 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
       duration(duration),
       time_step(time_step),
       t0(t0),
+      threads(threads),
       initial_condition(std::move(initial_condition)),
       scattering_model(std::move(scattering_model)),
       magnetic_field(std::move(magnetic_field)),
@@ -61,11 +63,11 @@ Ensamble::Ensamble(unsigned int spin_count, double duration, double time_step,
 	}
 }
 
-void Ensamble::run() {
+arma::mat Ensamble::do_run(unsigned int thread_nr) {
 	auto size = (size_t)(duration / time_step);
 	auto result = arma::mat(4, size, arma::fill::zeros);
 
-	for (size_t k = 0; k < spin_count; k++) {
+	for (size_t k = 0; k < spin_count / thread_nr ; k++) {
 		auto times = std::vector<double>{};
 		auto spins = std::vector<arma::vec3>{};
 		auto kvecs = std::vector<arma::vec3>{};
@@ -121,7 +123,8 @@ void Ensamble::run() {
 			}
 		}
 	}
-
+	return result;
+	/*
 	output->write_header({"t", "s_x", "s_y", "s_z"});
 
 	for (size_t k = 0; k < size; k++) {
@@ -132,10 +135,35 @@ void Ensamble::run() {
 		  result(3,k) / spin_count
 		});
 	}
+	*/
 }
 
-void Ensamble::run(unsigned int) {
-	this->run();  // TODO multithread
+void Ensamble::run() {
+	using namespace std;
+	vector<future<arma::mat>> future_run;
+	auto size=(size_t)(duration / time_step);
+	auto result=arma::mat(4, size, arma::fill::zeros);
+	for(unsigned int i = 0; i < threads; i++)
+	{
+		future_run.push_back(async([&]{ return do_run(threads); }));
+	}
+	for(unsigned int i = 0; i < threads; i++)
+	{
+		future_run[i].wait();
+		result+=future_run[i].get();
+	}
+	output->write_header({"t","s_x","s_y","s_z"});
+
+	for(size_t k = 0; k < size; k++)
+	{
+		output->write_record({
+		k*time_step,
+		result(1,k) / spin_count,
+		result(2,k) / spin_count,
+		result(3,k) / spin_count		
+		});
+	}
+	//this->run();  // TODO multithread
 }
 
 EchoDecay::EchoDecay(
